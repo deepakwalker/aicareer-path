@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Career Path Recommender</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 800px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px;
+            border-radius: 15px;
+            line-height: 1.6;
+        }
+
+        .bot .message-content {
+            background: white;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .roadmap {
+            margin-top: 15px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .roadmap h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline-item {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #667eea;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 17px;
+            width: 2px;
+            height: calc(100% + 10px);
+            background: #e0e0e0;
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .month {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .tasks {
+            list-style: none;
+            margin-top: 8px;
+        }
+
+        .tasks li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .tasks li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+        }
+
+        #sendBtn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #sendBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendBtn:active {
+            transform: translateY(0);
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px;
+            background: white;
+            border-radius: 15px;
+            width: fit-content;
+            border: 1px solid #e0e0e0;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .quick-btn {
+            padding: 8px 15px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 AI Career Path Recommender</h1>
+            <p>Your personal guide to building a successful AI career</p>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot">
+                <div class="message-content">
+                    <p>Hello! 👋 I'm your AI Career Path Advisor. I can help you with:</p>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>Creating personalized 6-12 month career roadmaps</li>
+                        <li>Study recommendations and learning paths</li>
+                        <li>Career transition guidance</li>
+                        <li>Skill development strategies</li>
+                    </ul>
+                    <div class="quick-questions">
+                        <button class="quick-btn" onclick="quickQuestion('I want to become an AI/ML Engineer')">AI/ML Engineer Path</button>
+                        <button class="quick-btn" onclick="quickQuestion('I want to become a Data Scientist')">Data Scientist Path</button>
+                        <button class="quick-btn" onclick="quickQuestion('I\'m a beginner in AI')">Beginner in AI</button>
+                    </div>
+                </div>
+            </div>
+            <div class="typing-indicator" id="typingIndicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Ask me anything about AI careers..." onkeypress="handleKeyPress(event)">
+            <button id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const careerPaths = {
+            'ml engineer': {
+                title: 'AI/ML Engineer Career Roadmap',
+                duration: '12 months',
+                roadmap: [
+                    { month: 'Months 1-2', tasks: ['Master Python programming fundamentals', 'Learn NumPy, Pandas, and data manipulation', 'Study basic statistics and probability', 'Complete online courses (Coursera ML Specialization)'] },
+                    { month: 'Months 3-4', tasks: ['Deep dive into machine learning algorithms', 'Implement ML models from scratch', 'Learn scikit-learn library thoroughly', 'Work on 2-3 beginner ML projects'] },
+                    { month: 'Months 5-6', tasks: ['Start deep learning with TensorFlow/PyTorch', 'Study neural networks and CNNs', 'Learn about model optimization techniques', 'Build portfolio projects with real datasets'] },
+                    { month: 'Months 7-8', tasks: ['Advanced deep learning (RNNs, Transformers)', 'Study MLOps and model deployment', 'Learn Docker and cloud platforms (AWS/GCP)', 'Contribute to open-source ML projects'] },
+                    { month: 'Months 9-10', tasks: ['Specialize in an area (NLP, Computer Vision, etc.)', 'Build advanced capstone project', 'Learn production ML best practices', 'Prepare technical interview skills'] },
+                    { month: 'Months 11-12', tasks: ['Create comprehensive portfolio website', 'Network with AI professionals on LinkedIn', 'Apply to ML engineer positions', 'Prepare for system design interviews'] }
+                ]
+            },
+            'data scientist': {
+                title: 'Data Scientist Career Roadmap',
+                duration: '10 months',
+                roadmap: [
+                    { month: 'Months 1-2', tasks: ['Master Python and SQL fundamentals', 'Learn statistics and probability theory', 'Study data visualization (Matplotlib, Seaborn)', 'Complete introductory data science courses'] },
+                    { month: 'Months 3-4', tasks: ['Advanced statistical analysis and hypothesis testing', 'Learn exploratory data analysis techniques', 'Master Pandas for data manipulation', 'Work on Kaggle datasets and competitions'] },
+                    { month: 'Months 5-6', tasks: ['Machine learning algorithms and applications', 'Feature engineering and selection', 'Model evaluation and validation techniques', 'Build 3-4 data science projects'] },
+                    { month: 'Months 7-8', tasks: ['Learn big data tools (Spark, Hadoop basics)', 'Study A/B testing and experimental design', 'Advanced visualization with Tableau/Power BI', 'Create business-focused analytics projects'] },
+                    { month: 'Months 9-10', tasks: ['Build comprehensive portfolio showcasing projects', 'Develop data storytelling skills', 'Prepare for technical and case interviews', 'Network and apply to data scientist roles'] }
+                ]
+            },
+            'beginner': {
+                title: 'AI Beginner Learning Roadmap',
+                duration: '6 months',
+                roadmap: [
+                    { month: 'Month 1', tasks: ['Learn Python basics (variables, loops, functions)', 'Understand basic programming concepts', 'Complete Python beginner course', 'Practice on coding platforms (HackerRank, LeetCode)'] },
+                    { month: 'Month 2', tasks: ['Introduction to data structures', 'Learn basic mathematics for AI (linear algebra basics)', 'Study introductory statistics', 'Start learning Pandas and NumPy'] },
+                    { month: 'Months 3-4', tasks: ['Introduction to machine learning concepts', 'Learn supervised vs unsupervised learning', 'Study simple algorithms (Linear Regression, KNN)', 'Work on guided ML tutorials and mini-projects'] },
+                    { month: 'Months 5-6', tasks: ['Build 2-3 beginner ML projects', 'Learn basic data visualization', 'Understand model evaluation basics', 'Decide on specialization path (ML Engineer, Data Scientist, etc.)'] }
+                ]
+            }
+        };
+
+        const knowledgeBase = {
+            'python': 'Python is essential for AI/ML. Start with basics, then learn libraries like NumPy, Pandas, and scikit-learn. Resources: Python.org tutorials, "Automate the Boring Stuff", and Codecademy.',
+            'mathematics': 'Core math for AI includes: Linear Algebra (matrices, vectors), Calculus (derivatives, gradients), Statistics (probability, distributions), and Optimization. Khan Academy and 3Blue1Brown are excellent resources.',
+            'tensorflow': 'TensorFlow is a popular deep learning framework. Start after mastering ML basics. Use official TensorFlow tutorials and build projects progressively.',
+            'pytorch': 'PyTorch is preferred in research. It\'s more intuitive than TensorFlow. Learn through official tutorials and fast.ai courses.',
+            'projects': 'Build projects like: Image classifier, Sentiment analysis, Recommendation system, Chatbot, or Price predictor. Use real datasets from Kaggle.',
+            'certification': 'Valuable certifications: Google TensorFlow Developer, AWS ML Specialty, Microsoft Azure AI, and Andrew Ng\'s Deep Learning Specialization.',
+            'salary': 'AI/ML roles typically start at $80K-$120K for entry-level positions, with senior positions reaching $150K-$250K+ depending on location and company.',
+            'interview': 'AI interviews cover: Coding (algorithms/data structures), ML concepts, system design, and behavioral questions. Practice on LeetCode and study ML fundamentals thoroughly.'
+        };
+
+        function addMessage(content, isUser = false) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            messageDiv.innerHTML = `<div class="message-content">${content}</div>`;
+            chatContainer.insertBefore(messageDiv, document.getElementById('typingIndicator'));
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function generateRoadmap(pathKey) {
+            const path = careerPaths[pathKey];
+            let html = `<div class="roadmap">
+                <h3>${path.title} (${path.duration})</h3>
+                <div class="timeline">`;
+            
+            path.roadmap.forEach(item => {
+                html += `<div class="timeline-item">
+                    <div class="month">${item.month}</div>
+                    <ul class="tasks">`;
+                item.tasks.forEach(task => {
+                    html += `<li>${task}</li>`;
+                });
+                html += `</ul></div>`;
+            });
+            
+            html += `</div></div>`;
+            return html;
+        }
+
+        function getBotResponse(userMessage) {
+            const msg = userMessage.toLowerCase();
+            
+            if (msg.includes('ml engineer') || msg.includes('machine learning engineer') || msg.includes('ai engineer')) {
+                return `Great choice! Here's your personalized roadmap to become an AI/ML Engineer:${generateRoadmap('ml engineer')}<p style="margin-top: 15px;">💡 <strong>Key Tips:</strong> Focus on building strong fundamentals, create a GitHub portfolio, and contribute to open-source projects. Consistency is more important than speed!</p>`;
+            }
+            
+            if (msg.includes('data scientist')) {
+                return `Excellent! Here's your personalized roadmap to become a Data Scientist:${generateRoadmap('data scientist')}<p style="margin-top: 15px;">💡 <strong>Key Tips:</strong> Focus on storytelling with data, build business acumen, and always think about the "why" behind the analysis.</p>`;
+            }
+            
+            if (msg.includes('beginner') || msg.includes('start') || msg.includes('new to ai')) {
+                return `Perfect! Let's start your AI journey with a solid foundation:${generateRoadmap('beginner')}<p style="margin-top: 15px;">💡 <strong>Key Tips:</strong> Don't rush! Master the basics before moving to advanced topics. Practice daily and join AI communities for support.</p>`;
+            }
+            
+            for (let key in knowledgeBase) {
+                if (msg.includes(key)) {
+                    return knowledgeBase[key];
+                }
+            }
+            
+            if (msg.includes('roadmap') || msg.includes('plan')) {
+                return 'I can create personalized roadmaps for:<br><br>• AI/ML Engineer (12 months)<br>• Data Scientist (10 months)<br>• Beginner in AI (6 months)<br><br>Which path interests you?';
+            }
+            
+            if (msg.includes('study') || msg.includes('learn') || msg.includes('course')) {
+                return 'Here are top learning resources:<br><br><strong>Online Platforms:</strong><br>• Coursera (Andrew Ng\'s ML Course)<br>• Fast.ai (Practical Deep Learning)<br>• DeepLearning.AI specializations<br>• Kaggle Learn<br><br><strong>Books:</strong><br>• "Hands-On Machine Learning" by Aurélien Géron<br>• "Deep Learning" by Goodfellow<br>• "Python for Data Analysis" by Wes McKinney<br><br>What specific topic would you like to learn?';
+            }
+            
+            if (msg.includes('job') || msg.includes('career') || msg.includes('hire')) {
+                return 'To land an AI job:<br><br>1. <strong>Build a strong portfolio</strong> with 5-7 projects<br>2. <strong>Master fundamentals</strong> - algorithms, statistics, ML theory<br>3. <strong>Contribute to open source</strong><br>4. <strong>Network</strong> on LinkedIn and attend meetups<br>5. <strong>Practice interviews</strong> on LeetCode and ML interview prep<br>6. <strong>Create technical blog posts</strong> to showcase knowledge<br><br>Would you like a detailed roadmap for any specific role?';
+            }
+            
+            if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+                return 'Hello! 👋 I\'m here to help you build your AI career. Would you like me to create a personalized roadmap for you? Just tell me your goal (e.g., "I want to become an ML Engineer" or "I\'m a complete beginner").';
+            }
+            
+            return 'I can help you with AI career planning! Try asking me about:<br><br>• Specific career paths (ML Engineer, Data Scientist)<br>• Learning resources and courses<br>• Creating a personalized roadmap<br>• Study plans and certifications<br>• Job search strategies<br><br>What would you like to know?';
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'block';
+            document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            addMessage(message, true);
+            input.value = '';
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = getBotResponse(message);
+                addMessage(response);
+            }, 1000 + Math.random() * 1000);
+        }
+
+        function quickQuestion(question) {
+            document.getElementById('userInput').value = question;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
